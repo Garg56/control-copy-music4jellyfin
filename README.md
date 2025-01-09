@@ -1,6 +1,6 @@
-# Control and copy music to Jellyfin
+# Control or copy music to Jellyfin
 
-_Check your music and then copy to Jellyfin._
+_Check your music or copy it to Jellyfin._
 
 A simple bash script[^1] to check your music referential.
 
@@ -50,13 +50,43 @@ _Organize your music referential:_
 
 ### Step 2: Check referential repository
 
-    ```bash
-    /home/myname/Music/cc-music4jellyfin.sh --check ./
-    ```
+```bash
+/home/myname/Music/cc-music4jellyfin.sh --check ./
+```
 
-    ```bash
-    /home/myname/Music/cc-music4jellyfin.sh --check --white "./T ./R" ./
-    ```
+```bash
+/home/myname/Music/cc-music4jellyfin.sh --check --white "./A ./R" ./
+```
+
+The displaying log:
+
+    White list: ./A ./R
+     
+    =>Skipping './M'.
+     
+    =>Skipping './N'.
+
+    =>Reading './A' :
+    =====>Checking artist 'Artist Name 1'
+    =========>Reading disc 'Title Album 1'
+    =========>OK
+    =========>Reading disc 'Title Album 2'
+    =========>OK
+    =====>Checking artist 'Artist Name 2'
+    =========>Reading disc ''
+    =========>Warning no album
+     
+The summary result:
+
+    END=========================================
+    TOTAL No error on MP3......: 75
+    TOTAL No error on cover....: 75
+    TOTAL Warning on album.....: 12/75
+    TOTAL No warning on folder.: 16
+    TOTAL No error artist name.: 16
+    TOTAL No error on artist...: 16
+    TOTAL OK
+    TOTAL Artists: 16 - Albums : 75
 
 ### Step 3: Copy referential repository
 
