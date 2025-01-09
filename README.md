@@ -32,10 +32,11 @@ _Organize your music referential:_
 **First level**: Just the alphabet. To simplify humain access to artist/album, artists are grouped in alphabetical directory.
 
 **Second level**: Artist name. The full artist name, the same used in id3v2 tags. I chose `LAST NAME First Name`. Files are :
-    - folder: portrait of the artist or group (file required, jpg, png or webp),
-    - backdrop.jpg: artist in action (file optional, jpg, png or webp),
-    - logo.png: logo or signature on a black background (file optional, jpg, png or webp),
-    - artist.nfo: XML metadata with artist musicbrainz id, link to folder and backdrop(file optional).
+
+- folder: portrait of the artist or group (file required, jpg, png or webp),
+- backdrop.jpg: artist in action (file optional, jpg, png or webp),
+- logo.png: logo or signature on a black background (file optional, jpg, png or webp),
+- artist.nfo: XML metadata with artist musicbrainz id, link to folder and backdrop (file optional).
 
 ### Step 2: Check referential repository
 
