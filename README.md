@@ -8,6 +8,7 @@ A simple bash script[^1] to check your music referential.
 
 _Organize your music referential:_
 
+```text
     ../Music
     ├── A
     │   ├── Artist Name 1
@@ -33,6 +34,7 @@ _Organize your music referential:_
     ├── Podcasts
     ├── ...
     └── Z
+```
 
 **First level**: Just the alphabet. To simplify humain access to artist/album, artists are grouped in alphabetical directory. `Audiobooks` and `Podcasts` directories are specific, they are skipped while checking or copying.
 
@@ -60,6 +62,7 @@ _Organize your music referential:_
 
 The displaying log:
 
+```text
     White list: ./A ./R
      
     =>Skipping './M'.
@@ -75,9 +78,11 @@ The displaying log:
     =====>Checking artist 'Artist Name 2'
     =========>Reading disc ''
     =========>Warning no album
-     
+```
+
 The summary result:
 
+```text
     END=========================================
     TOTAL No error on MP3......: 75
     TOTAL No error on cover....: 75
@@ -87,6 +92,7 @@ The summary result:
     TOTAL No error on artist...: 16
     TOTAL OK
     TOTAL Artists: 16 - Albums : 75
+```
 
 ### Step 3: Copy referential repository
 
@@ -94,20 +100,21 @@ The script copy all the files in the current directory but suppress the first le
 
 To copy all files:
 
-    ```bash
-    /home/myname/Music/cc-music4jellyfin.sh  ./
-    ```
+```bash
+/home/myname/Music/cc-music4jellyfin.sh  ./
+```
 
 If you want to copy only some letters (A et C):
 
-    ```bash
-    /home/myname/Music/cc-music4jellyfin.sh --white "./A ./C" ./
-    ```
+```bash
+/home/myname/Music/cc-music4jellyfin.sh --white "./A ./C" ./
+```
 
 ### Step 4: Final Jellyfin media library
 
 Jellyfin will create album.nfo in each album directory, and update/create artist.nfo.
 
+```text
     ../Music
     ├── Artist Name 1
     │   |── Title Album 1
@@ -130,6 +137,7 @@ Jellyfin will create album.nfo in each album directory, and update/create artist
     │   ├── folder.jpg
     │   └── logo.png
     ├── ...
+```
   
 ---
 
