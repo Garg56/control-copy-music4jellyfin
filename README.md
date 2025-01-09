@@ -1,32 +1,41 @@
-<header>
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+# Control and copy music to Jellyfin
 
-# Introduction to GitHub
+_Check your music and then copy to Jellyfin._
 
-_Get started using GitHub in less than an hour._
+## Step 1: Initial referential repository
 
-</header>
+_Organize your music referential:_
 
-<!--
-  <<< Author notes: Step 1 >>>
-  Choose 3-5 steps for your course.
-  The first step is always the hardest, so pick something easy!
-  Link to docs.github.com for further explanations.
-  Encourage users to open new tabs for steps!
--->
+    ../Musique
+    ├── A
+    │   ├── Artist Name 1
+    │   │   |── Title Album 1
+    │   │   │   ├── 01 - first.mp3
+    │   │   │   ├── 02 - second.mp3
+    │   │   │   ...
+    │   │   │   └── cover.jpg
+    │   │   ├── Title Album 2
+    │   │   │   ├── 01 - first.mp3
+    │   │   │   ...
+    │   │   │   └── cover.jpg
+    │   │   ├── backdrop.jpg
+    │   │   └── folder.jpg
+    │   └── Artist Name 2
+    │       ├── artist.nfo
+    │       ├── backdrop.jpg
+    │       ├── folder.jpg
+    │       └── logo.png
+    ├── ...
+    └── Z
 
-## Step 1: Create a branch
+**First level**: Just the alphabet. To simplify humain access to artist/album, artists are grouped in alphabetical directory.
 
-_Welcome to "Introduction to GitHub"! :wave:_
-
-**What is GitHub?**: GitHub is a collaboration platform that uses _[Git](https://docs.github.com/get-started/quickstart/github-glossary#git)_ for versioning. GitHub is a popular place to share and contribute to [open-source](https://docs.github.com/get-started/quickstart/github-glossary#open-source) software.
-<br>:tv: [Video: What is GitHub?](https://www.youtube.com/watch?v=pBy1zgt0XPc)
+**Second level**: Artist name. The full artist name, the same used in id3v2 tags. I chose `LAST NAME First Name`. Files are :
+    - folder: portrait of the artist or group (file required, jpg, png or webp),
+    - backdrop.jpg: artist in action (file optional, jpg, png or webp),
+    - logo.png: logo or signature on a black background (file optional, jpg, png or webp),
+    - artist.nfo: XML metadata with artist musicbrainz id, link to folder and backdrop(file optional).
 
 **What is a repository?**: A _[repository](https://docs.github.com/get-started/quickstart/github-glossary#repository)_ is a project containing files and folders. A repository tracks versions of files and folders. For more information, see "[About repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories)" from GitHub Docs.
 
@@ -38,26 +47,12 @@ Branches allow you to separate your work from the `main` branch. In other words,
 
 ![profile-readme-example](/images/profile-readme-example.png)
 
-### :keyboard: Activity: Your first branch
+### Step 2: Check referential repository
 
-1. Open a new browser tab and navigate to your newly made repository. Then, work on the steps in your second tab while you read the instructions in this tab.
-2. Navigate to the **< > Code** tab in the header menu of your repository.
+### Step 3: Copy referential repository
 
-   ![code-tab](/images/code-tab.png)
+### Step 4: Final Jellyfin repository
 
-3. Click on the **main** branch drop-down.
-
-   ![main-branch-dropdown](/images/main-branch-dropdown.png)
-
-4. In the field, name your branch `my-first-branch`. In this case, the name must be `my-first-branch` to trigger the course workflow.
-5. Click **Create branch: my-first-branch** to create your branch.
-
-   ![create-branch-button](/images/create-branch-button.png)
-
-   The branch will automatically switch to the one you have just created.
-   The **main** branch drop-down bar will reflect your new branch and display the new branch name.
-
-6. Wait about 20 seconds then refresh this page (the one you're following instructions from). [GitHub Actions](https://docs.github.com/en/actions) will automatically update to the next step.
 
 <footer>
 
@@ -68,8 +63,6 @@ Branches allow you to separate your work from the `main` branch. In other words,
 
 ---
 
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/introduction-to-github) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
-
-&copy; 2024 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+[MIT License](https://gh.io/mit)
 
 </footer>
