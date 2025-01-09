@@ -25,10 +25,39 @@ counterartist=0
 counteralbum=0
 counterrorartist=0
 counterrorname=0
+CC_DEBUG=0
 
 function jukusage () {
-    printf "\nhelp: %s %s\n" $(basename "$0") "[--check] [--white list] [destination]"
+    printf "\nhelp: %s %s\n" $(basename "$0") "[--debug] [--check] [--white list] [destination]"
     exit $1
+}
+
+function checkartist() {
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: listartist=${listartist}=" ; fi
+                        if [[ "${listartist}" == *'&'* ]]; then
+                        	counterrorartist=$(expr ${counterrorartist} + 1 )
+                        	echo -e "=========>${RED}Error artist *&* : '${listartist}'${NC}"
+                        fi
+                        # loop on artist
+                        IFS='/' read -ra NARTIST <<< "${listartist}"
+                        for i in "${NARTIST[@]}"; do
+                            # suppress extra blank
+                            i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: currentartist=${artistname}=${i}=" ; fi
+                            # find "$i" in second level
+                            if [[ "${i// }" == "" ]]; then
+                                    echo -e "=========>${RED}Error artist void: '${i}'${NC}"
+                                    counterrorartist=$(expr ${counterrorartist} + 1 )
+                            elif [[ "${artistname}" != "${i}" ]]; then
+                                dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
+                                # check if directory exist
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: otherartist=${dir}=${i}=" ; fi
+                                if [[ "${dir##*/}" != "${i}" ]]; then
+                                    echo -e "=========>${RED}Error no artist: '${i}'${NC}"
+                                    counterrorartist=$(expr ${counterrorartist} + 1 )
+                                fi
+                            fi
+                        done
 }
 
 if ! command -v id3v2 -v 2>&1 >/dev/null; then
@@ -38,12 +67,16 @@ fi
 
 runmode="normal"
 juknbarg="$#"
-if [[ ${juknbarg} -ge 5 ]]; then
+if [[ ${juknbarg} -ge 6 ]]; then
     jukusage 1
 fi
 if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--help" ]]; then
     jukusage 0
-elif [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--check" ]]; then
+elif [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--debug" ]]; then
+    CC_DEBUG=1
+    shift
+fi
+if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--check" ]]; then
     runmode="check"
     shift
 fi
@@ -108,7 +141,7 @@ while IFS= read -r d; do
                 albumname=$(basename "${album}")
                 if [[ "${albumname}" == "folder.jpg" ]] || [[ "${albumname}" == "folder.png" ]] || [[ "${albumname}" == "folder.webp" ]]; then
                     nbfolder=$(expr ${nbfolder} + 1 )
-#echo "DEBUG: '${artist}/artist.nfo'"
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: '${artist}/artist.nfo'" ; fi
                     if [[ -f "${artist}/artist.nfo" ]]; then
                         if ! grep -q '</poster>' "${artist}/artist.nfo"; then
                             echo -e "=====>${RED}Error poster in artist.nfo${NC}"
@@ -160,43 +193,40 @@ while IFS= read -r d; do
                 dirmusic=$(find "${album}" -maxdepth 1 -mindepth 1 -type f )
                 while IFS= read -r  music; do
                     simplemusic=$(basename "${music}")
-#echo "DEBUG: file=${music}="
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: file=${music}=" ; fi
+                    if [[ "${simplemusic}" == "cover.jpg" ]]; then
+                        nbcover=$(expr ${nbcover} + 1 )
+                        continue
+                    fi
                     if [[ "${simplemusic##*.}" == "mp3" ]]; then
                         nbmp3=$(expr ${nbmp3} + 1 )
                         # get list of artist in mp3 tag
-                        listartist=$(id3v2 -R "${music}" | grep TPE1:)
+                        listartist=$(id3v2 -R "${music}" | grep TPE1: || true)
                         # suppress label
                         listartist="${listartist#*: }"
-#echo "DEBUG: listartist=${listartist}="
-                        # loop on artist
-                        if [[ "${listartist}" == *'&'* ]]; then
-                        	counterrorartist=$(expr ${counterrorartist} + 1 )
-                        	echo -e "=========>${RED}Error artist *&* : '${listartist}'${NC}"
-                	fi
-                        IFS='/' read -ra NARTIST <<< "${listartist}"
-                        for i in "${NARTIST[@]}"; do
-                            # suppress extra blank
-                            i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-#echo "DEBUG: currentartist=${artistname}=${i}="
-                            # find "$i" in second level
-                            if [[ "${i// }" == "" ]]; then
-                                    echo -e "=========>${RED}Error artist void: '${i}'${NC}"
-                                    counterrorartist=$(expr ${counterrorartist} + 1 )
-                            elif [[ "${artistname}" != "${i}" ]]; then
-                                dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
-                                # check if directory exist
-#echo "DEBUG: otherartist=${dir}=${i}="
-                                if [[ "${dir##*/}" != "${i}" ]]; then
-                                    echo -e "=========>${RED}Error no artist: '${i}'${NC}"
-                                    counterrorartist=$(expr ${counterrorartist} + 1 )
-                                fi
-                            fi
-                        done
-                    elif [[ "${simplemusic}" == "cover.jpg" ]]; then
-                        nbcover=$(expr ${nbcover} + 1 )
+                	elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        nbmp3=$(expr ${nbmp3} + 1 )
+                        listartist=$(metaflac --list --block-number=1 "${music}" | grep ' ARTIST=' || true)
+                        # suppress label
+                        listartist="${listartist#*=}"
+                    else
+                        continue
                     fi
+                    checkartist 
+                    if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                        # get list of artist in mp3 tag
+                        listartist=$(id3v2 -R "${music}" | grep TPE2: || true)
+                        # suppress label
+                        listartist="${listartist#*: }"
+                	elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        nbmp3=$(expr ${nbmp3} + 1 )
+                        listartist=$(metaflac --list --block-number=1 "${music}" | grep ' ALBUMARTIST=' || true)
+                        # suppress label
+                        listartist="${listartist#*=}"
+                    fi
+                    checkartist 
                 done <<< "${dirmusic}"
-#echo "DEBUG: synthese album=${album}="
+if (( ${CC_DEBUG} )) ; then echo "DEBUG: synthese album=${album}=" ; fi
                 if [[ ${nbmp3} -eq 0 ]]; then
                     echo -e "=========>${RED}Error no MP3${NC}"
                     counterrormp3=$(expr ${counterrormp3} + 1 )
