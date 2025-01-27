@@ -122,15 +122,15 @@ Jellyfin will create album.nfo in each album directory, and update/create artist
     │   │   ├── 02 - second track.mp3
     │   │   ...
     │   │   ├── cover.jpg
-    │   │   └── $\color{green}{album.npo}$
+    │   │   └── album.npo <--
     │   ├── Title Album 2
     │   │   ├── 01 - first track.mp3
     │   │   ...
     │   │   ├── cover.jpg
-    │   │   └── _album.npo_
+    │   │   └── album.npo <--
     │   ├── backdrop.jpg
     │   ├── folder.jpg
-    │   └── _artist.npo_
+    │   └── artist.npo <--
     ├── Artist Name 2
     │   ├── artist.nfo
     │   ├── backdrop.jpg
