@@ -1,8 +1,13 @@
-# Control or copy music to Jellyfin
+# Check or copy music to Jellyfin
 
 _Check your music or copy it to Jellyfin._
 
-A simple bash script[^1] to check your music referential.
+You have your classified and ordered music in your reference folder, and you want :
+
+- to check if Jellyfin will integrate it,
+- copy your music to a Jellyfin folder.
+
+Here, a simple bash script[^1] to check or copy your music referential.
 
 ## Step 1: Initial referential repository
 
@@ -112,7 +117,7 @@ If you want to copy only some letters (A et C):
 
 ### Step 4: Final Jellyfin media library
 
-Jellyfin will create album.nfo in each album directory, and update/create artist.nfo.
+Jellyfin will create album.nfo in each album directory, and update/create the file artist.nfo in the artist directory (if you chose medadata recorded in NFO files in the Jellyfin configuration).
 
 ```text
     ../Music
@@ -122,15 +127,15 @@ Jellyfin will create album.nfo in each album directory, and update/create artist
     │   │   ├── 02 - second track.mp3
     │   │   ...
     │   │   ├── cover.jpg
-    │   │   └── album.npo <--
+    │   │   └── album.nfo <--
     │   ├── Title Album 2
     │   │   ├── 01 - first track.mp3
     │   │   ...
     │   │   ├── cover.jpg
-    │   │   └── album.npo <--
+    │   │   └── album.nfo <--
     │   ├── backdrop.jpg
     │   ├── folder.jpg
-    │   └── artist.npo <--
+    │   └── artist.nfo <--
     ├── Artist Name 2
     │   ├── artist.nfo
     │   ├── backdrop.jpg
