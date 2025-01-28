@@ -12,6 +12,7 @@ set -o errexit -o pipefail -o noclobber -o nounset
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
 BLUE='\033[0;34m'
 LIGHT_PURPLE='\033[1;35m'
 NC='\033[0m' # No Color
@@ -25,10 +26,9 @@ counterartist=0
 counteralbum=0
 counterrorartist=0
 counterrorname=0
-CC_DEBUG=0
 
 function jukusage () {
-    printf "\nhelp: %s %s\n" $(basename "$0") "[--debug] [--check] [--white list] [destination]"
+    printf "\nhelp: %s %s\n" $(basename "$0") "[-v] [-c] [-w list] [destination]"
     exit $1
 }
 
@@ -61,43 +61,56 @@ if (( ${CC_DEBUG} )) ; then echo "DEBUG: otherartist=${dir}=${i}=" ; fi
 }
 
 if ! command -v id3v2 -v 2>&1 >/dev/null; then
-	echo "id3v2 could not be found !"
+	echo -e "${RED}ERROR: id3v2 could not be found !${NC}\n"
 	exit 1
 fi
+if ! command -v metaflac -v 2>&1 >/dev/null; then
+	echo -e "${ORANGE}WARNING: metaflac could not be found !${NC}"
+fi
 
+# initialize variables
 runmode="normal"
+CC_DEBUG=0
+whitelist=""
+TODIR=""
+
+# analyze parameters with getops
+OPTIND=1
+
+while getopts "hcvw:" opt; do
+  case "$opt" in
+    h) jukusage 0
+       ;;
+    c) runmode="check"
+       ;;
+    v) CC_DEBUG=1
+       ;;
+    w) whitelist=${OPTARG}
+       ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+# get the destination
 juknbarg="$#"
-if [[ ${juknbarg} -ge 6 ]]; then
-    jukusage 1
-fi
-if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--help" ]]; then
-    jukusage 0
-elif [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--debug" ]]; then
-    CC_DEBUG=1
-    shift
-fi
-if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" == "--check" ]]; then
-    runmode="check"
-    shift
-fi
-if [[ ${juknbarg} -ge 2 ]] && [[ "${1}" == "--white" ]]; then
-    shift
-    whitelist="${1}"
-    shift
-else
-    whitelist=""
-fi
-juknbarg="$#"
-if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" != "" ]]; then
-    TODIR="$1"
+TODIR=""
+if [[ "${runmode}" == "normal" ]]; then
+    if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" != "" ]]; then
+        TODIR="$1"
+    else
+        TODIR="$(pwd)"
+    fi
 fi
 
 # get the script location to became source
 FROMDIR="$( cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)@"
 FROMDIR="${FROMDIR%@}"
 
-# get the destination
-TODIR="$(pwd)"
+if [[ "${runmode}" == "normal" ]] && [[ "${FROMDIR}" == "${TODIR}" ]]; then
+	echo -e "${RED}ERROR: copy from/to with same directory (${TODIR})!${NC}\n"
+	exit 1
+fi
 
 echo -e "\nStarting copying Jellyfin Jukebox\nfrom '${FROMDIR}'\n to  '${TODIR}'\n"
 
@@ -105,9 +118,14 @@ echo -e "\nStarting copying Jellyfin Jukebox\nfrom '${FROMDIR}'\n to  '${TODIR}'
 exception='./Audiobook ./Podcasts'
 # whitelist='./A ./B ./C ./D ./E ./F ./Y ./Z'
 if [[ "${whitelist}" != "" ]]; then
-    echo "White list: ${whitelist}"
+    echo "White list='${whitelist}"
 else
-    echo "Exception: ${exception}"
+    echo "Black list='${exception}'"
+fi
+
+if (( ${CC_DEBUG} )); then
+    echo "DEBUG: runmode=${runmode}"
+    echo "DEBUG: debug=yes"
 fi
 
 # loop in the directory Music

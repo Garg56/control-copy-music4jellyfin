@@ -36,7 +36,7 @@ _Organize your music referential:_
     └── Z
 ```
 
-**First level**: Just the alphabet. To simplify humain access to artist/album, artists are grouped in alphabetical directory. `Audiobooks` and `Podcasts` directories are specific, they are skipped while checking or copying.
+**First level**: Just letters of the alphabet. To simplify humain access to artist/album, artists are grouped in alphabetical directory. `Audiobooks` and `Podcasts` directories are specific, they are skipped while checking or copying.
 
 **Second level**: Artist name. The full artist name, the same used in id3v2 tags. I chose `LAST NAME First Name`. Files are :
 
@@ -53,11 +53,11 @@ _Organize your music referential:_
 ### Step 2: Check referential repository
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh --check ./
+/home/myname/Music/cc-music4jellyfin.sh -c ./
 ```
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh --check --white "./A ./R" ./
+/home/myname/Music/cc-music4jellyfin.sh -c -w "./A ./R" ./
 ```
 
 The displaying log:
@@ -107,7 +107,7 @@ To copy all files:
 If you want to copy only some letters (A et C):
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh --white "./A ./C" ./
+/home/myname/Music/cc-music4jellyfin.sh -w "./A ./C" ./
 ```
 
 ### Step 4: Final Jellyfin media library
