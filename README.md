@@ -5,7 +5,7 @@ _Check your music or copy it to Jellyfin._
 You have your classified and ordered music in your reference folder, and you want :
 
 - to check if Jellyfin will integrate it,
-- copy your music to a Jellyfin folder.
+- to copy your music to a Jellyfin folder.
 
 Here, a simple bash script[^1] to check or copy your music referential.
 
