@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 -->
+
 # Check or copy music to Jellyfin
 
 _Check your music or copy it to Jellyfin._
@@ -16,8 +18,8 @@ _Organize your music referential:_
 ```text
     ../Music
     ├── A
-    │   ├── Artist Name 1
-    │   │   |── Title Album 1
+    │   ├── Artist Name A1
+    │   │   |── Title Album 1
     │   │   │   ├── 01 - first track.mp3
     │   │   │   ├── 02 - second track.mp3
     │   │   │   ...
@@ -28,16 +30,16 @@ _Organize your music referential:_
     │   │   │   └── cover.jpg
     │   │   ├── backdrop.jpg
     │   │   └── folder.jpg
-    │   └── Artist Name 2
-    │       ├── artist.nfo
+    │   └── Artist Name A2
+    │       ├── artist.nfo
     │       ├── backdrop.jpg
     │       ├── folder.jpg
     │       └── logo.png
-    ├── ...
-    ├── Audiobook
-    ├── ...
-    ├── Podcasts
-    ├── ...
+    ├── B
+    │   ├── Artist Name B1
+    │   ...
+    .  
+    .  
     └── Z
 ```
 
@@ -58,11 +60,11 @@ _Organize your music referential:_
 ### Step 2: Check referential repository
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh -c ./
+cc-music4jellyfin.sh -i /home/myname/Music -v
 ```
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh -c -w "./A ./R" ./
+cc-music4jellyfin.sh  -i /home/myname/Music -v -w "./A ./R"
 ```
 
 The displaying log:
@@ -75,12 +77,12 @@ The displaying log:
     =>Skipping './N'.
 
     =>Reading './A' :
-    =====>Checking artist 'Artist Name 1'
+    =====>Checking artist 'Artist Name A1'
     =========>Reading disc 'Title Album 1'
     =========>OK
     =========>Reading disc 'Title Album 2'
     =========>OK
-    =====>Checking artist 'Artist Name 2'
+    =====>Checking artist 'Artist Name A2'
     =========>Reading disc ''
     =========>Warning no album
 ```
@@ -106,13 +108,13 @@ The script copy all the files in the current directory but suppress the first le
 To copy all files:
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh  ./
+cc-music4jellyfin.sh -i /home/myname/Music ./
 ```
 
-If you want to copy only some letters (A et C):
+If you want to copy only some letters (A and C):
 
 ```bash
-/home/myname/Music/cc-music4jellyfin.sh -w "./A ./C" ./
+cc-music4jellyfin.sh -i /home/myname/Music -w "./A ./C" ./
 ```
 
 ### Step 4: Final Jellyfin media library
@@ -121,8 +123,8 @@ Jellyfin will create album.nfo in each album directory, and update/create the fi
 
 ```text
     ../Music
-    ├── Artist Name 1
-    │   |── Title Album 1
+    ├── Artist Name A1
+    │   |── Title Album 1
     │   │   ├── 01 - first track.mp3
     │   │   ├── 02 - second track.mp3
     │   │   ...
@@ -136,14 +138,33 @@ Jellyfin will create album.nfo in each album directory, and update/create the fi
     │   ├── backdrop.jpg
     │   ├── folder.jpg
     │   └── artist.nfo <--
-    ├── Artist Name 2
-    │   ├── artist.nfo
+    ├── Artist Name A2
+    │   ├── artist.nfo
     │   ├── backdrop.jpg
     │   ├── folder.jpg
     │   └── logo.png
     ├── ...
 ```
-  
+
+## Usage
+
+The arguments of the script:
+
+cc-music4jellyfin.sh [-a _pattern_] [-b _list_] [-c] [-d] [-e] [-h] [-i _dir_] [-v] [-w _list_] [_destination_]  
+
+```text
+       -a pattern : pattern of artists to check or copy in line with white list  
+       -b list ...: directory list to not check or copy (black list) (incompatible with -w)  
+       -c ........: copy only (default)  
+       -d ........: debug display  
+       -e ........: exit on first error when checking  
+       -h ........: this help
+       -i dir ....: input directory (default is script directory)  
+       -v ........: check and verify only (incompatible with -c)  
+       -w list ...: directory list to check or copy (white list)  
+       destination: output directory  
+```
+
 ---
 
 [^1]: [MIT License](https://gh.io/mit)

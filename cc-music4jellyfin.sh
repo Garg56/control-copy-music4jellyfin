@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to copy all files in a jukebox directory for jellyfin
+# Script to check or copy all files in a jukebox directory for jellyfin
 
 # Need :
 # - id3v2
@@ -28,36 +28,58 @@ counterrorartist=0
 counterrorname=0
 
 function jukusage () {
-    printf "\nhelp: %s %s\n" $(basename "$0") "[-v] [-c] [-w list] [destination]"
+    printf "\nusage: %s %s\n" $(basename "$0") "[-a pattern] [-b list] [-c] [-d] [-e] [-h] [-i dir] [-v] [-w list] [destination]"
+    printf "     -a pattern: pattern of artists to check or copy in line with white list\n"
+    printf "     -b list   : directory list to not check or copy (black list) (incompatible with -w)\n"
+    printf "     -c        : copy only (default)\n"
+    printf "     -d        : debug display\n"
+    printf "     -e        : exit on first error when checking\n"
+    printf "     -h        : this help\n"
+    printf "     -i dir    : input directory (default is script directory)\n"
+    printf "     -v        : check and verify only (incompatible with -c)\n"
+    printf "     -w list   : directory list to check or copy (white list)\n"
+    printf "    destination: output directory\n\n"
     exit $1
 }
 
 function checkartist() {
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: listartist=${listartist}=" ; fi
-                        if [[ "${listartist}" == *'&'* ]]; then
-                        	counterrorartist=$(expr ${counterrorartist} + 1 )
-                        	echo -e "=========>${RED}Error artist *&* : '${listartist}'${NC}"
-                        fi
-                        # loop on artist
-                        IFS='/' read -ra NARTIST <<< "${listartist}"
-                        for i in "${NARTIST[@]}"; do
-                            # suppress extra blank
-                            i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: currentartist=${artistname}=${i}=" ; fi
-                            # find "$i" in second level
-                            if [[ "${i// }" == "" ]]; then
-                                    echo -e "=========>${RED}Error artist void: '${i}'${NC}"
-                                    counterrorartist=$(expr ${counterrorartist} + 1 )
-                            elif [[ "${artistname}" != "${i}" ]]; then
-                                dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
-                                # check if directory exist
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: otherartist=${dir}=${i}=" ; fi
-                                if [[ "${dir##*/}" != "${i}" ]]; then
-                                    echo -e "=========>${RED}Error no artist: '${i}'${NC}"
-                                    counterrorartist=$(expr ${counterrorartist} + 1 )
-                                fi
-                            fi
-                        done
+	cc_debugf "DEBUG: listartist=${listartist}="
+        if [[ "${listartist}" == *'&'* ]]; then
+               	cc_error "=========>${RED}Error artist *&* : '${listartist}'${NC}"
+               	counterrorartist=$(expr ${counterrorartist} + 1 )
+        fi
+        # loop on artist
+        IFS='/' read -ra NARTIST <<< "${listartist}"
+        for i in "${NARTIST[@]}"; do
+		# suppress extra blank
+		i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+		cc_debugf "DEBUG: currentartist=${artistname}=${i}="
+		# find "$i" in second level
+		if [[ "${i// }" == "" ]]; then
+			cc_error "=========>${RED}Error artist void: '${i}'${NC}"
+                        counterrorartist=$(expr ${counterrorartist} + 1 )
+		elif [[ "${artistname}" != "${i}" ]]; then
+			dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
+                        # check if directory exist
+			cc_debugf "DEBUG: otherartist=${dir}=${i}="
+                        if [[ "${dir##*/}" != "${i}" ]]; then
+                            cc_error "=========>${RED}Error no artist: '${i}'${NC}"
+			    counterrorartist=$(expr ${counterrorartist} + 1 )
+			fi
+		fi
+	done
+}
+
+function cc_error() {
+	echo -e "${1}"
+	if [[ "${CC_EXIT}" == "exit" ]]; then
+		echo -e "\n${RED}Exit on error${NC}\n"
+		exit 1
+	fi
+}
+
+function cc_debugf() {
+ 	if (( ${CC_DEBUG} )) ; then echo "${1}" ; fi
 }
 
 if ! command -v id3v2 -v 2>&1 >/dev/null; then
@@ -70,22 +92,60 @@ fi
 
 # initialize variables
 runmode="normal"
+flag_runmode=0
 CC_DEBUG=0
 whitelist=""
 TODIR=""
+CC_EXIT="no_exit"
+cc_artist=""
+
+# get the script location to became source
+FROMDIR="$( cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)@"
+FROMDIR="${FROMDIR%@}"
+
+# do not coppy these directories
+exception='./Podcasts'
 
 # analyze parameters with getops
 OPTIND=1
 
-while getopts "hcvw:" opt; do
+while getopts "a:b:cdehi:vw:" opt; do
   case "$opt" in
+    a) cc_artist=${OPTARG}
+       ;;
+    b) if [[ "${whitelist}" != "" ]]; then
+    	  echo -e "${RED}Parameters -b and -w are incompatible${NC}"
+          jukusage 1
+       else
+          exception=${OPTARG}
+       fi
+       ;;
+    c) if [[ "${runmode}" == "check" ]]; then
+    	  echo -e "${RED}Parameters -c and -v are incompatible${NC}"
+          jukusage 1
+       else
+          runmode="normal"
+       fi
+       flag_runmode=$(expr ${flag_runmode} + 1 )
+       ;;
+    d) CC_DEBUG=1
+       ;;
+    e) CC_EXIT="exit"
+       ;;
     h) jukusage 0
        ;;
-    c) runmode="check"
+    i) FROMDIR=${OPTARG}
        ;;
-    v) CC_DEBUG=1
+    v) if [[ ${flag_runmode} -ne 0 ]]; then
+          echo -e "${RED}Parameters -v and -c are incompatible${NC}"
+          jukusage 1
+       else
+          runmode="check"
+       fi
        ;;
     w) whitelist=${OPTARG}
+       ;;
+    *) jukusage 1
        ;;
   esac
 done
@@ -103,9 +163,6 @@ if [[ "${runmode}" == "normal" ]]; then
     fi
 fi
 
-# get the script location to became source
-FROMDIR="$( cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)@"
-FROMDIR="${FROMDIR%@}"
 
 if [[ "${runmode}" == "normal" ]] && [[ "${FROMDIR}" == "${TODIR}" ]]; then
 	echo -e "${RED}ERROR: copy from/to with same directory (${TODIR})!${NC}\n"
@@ -114,18 +171,28 @@ fi
 
 echo -e "\nStarting copying Jellyfin Jukebox\nfrom '${FROMDIR}'\n to  '${TODIR}'\n"
 
-# do not coppy these directories
-exception='./Audiobook ./Podcasts'
+
 # whitelist='./A ./B ./C ./D ./E ./F ./Y ./Z'
 if [[ "${whitelist}" != "" ]]; then
-    echo "White list='${whitelist}"
+    echo "White list='${whitelist}'"
 else
     echo "Black list='${exception}'"
 fi
 
+
+
 if (( ${CC_DEBUG} )); then
     echo "DEBUG: runmode=${runmode}"
     echo "DEBUG: debug=yes"
+    if [[ "${CC_EXIT}" == "exit" ]]; then
+    	echo "DEBUG: exit on first error=yes"
+    else
+    	echo "DEBUG: exit on first error=no"
+    fi
+else
+    if [[ "${CC_EXIT}" == "exit" ]]; then
+    	echo "Exit on first error"
+    fi
 fi
 
 # loop in the directory Music
@@ -145,7 +212,11 @@ while IFS= read -r d; do
     else
         echo -e "\n=>Reading '${d}' :"
     fi
-    dirartist=$(find "${d}" -maxdepth 1 -mindepth 1 -type d )
+    if [[ "${cc_artist}" != "" ]]; then
+    	dirartist=$(find "${d}" -maxdepth 1 -mindepth 1 -type d \( -name "${cc_artist}" \) )
+    else
+    	dirartist=$(find "${d}" -maxdepth 1 -mindepth 1 -type d )
+    fi
     while IFS= read -r artist; do
         artistname=$(basename "${artist}")
         if [[ ${runmode} == "check" ]]; then
@@ -159,10 +230,10 @@ while IFS= read -r d; do
                 albumname=$(basename "${album}")
                 if [[ "${albumname}" == "folder.jpg" ]] || [[ "${albumname}" == "folder.png" ]] || [[ "${albumname}" == "folder.webp" ]]; then
                     nbfolder=$(expr ${nbfolder} + 1 )
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: '${artist}/artist.nfo'" ; fi
+                    cc_debugf "DEBUG: '${artist}/artist.nfo'"
                     if [[ -f "${artist}/artist.nfo" ]]; then
                         if ! grep -q '</poster>' "${artist}/artist.nfo"; then
-                            echo -e "=====>${RED}Error poster in artist.nfo${NC}"
+                            cc_error "=====>${RED}Error poster in artist.nfo${NC}"
                             counterrorname=$(expr ${counterrorname} + 1 )
                         fi
                     fi
@@ -172,19 +243,19 @@ if (( ${CC_DEBUG} )) ; then echo "DEBUG: '${artist}/artist.nfo'" ; fi
                     nbground=$(expr ${nbground} + 1 )
                     if [[ -f "${artist}/artist.nfo" ]]; then
                         if ! grep -q '</fanart>' "${artist}/artist.nfo"; then
-                            echo -e "=====>${RED}Error fanart in artist.nfo${NC}"
+                            cc_error "=====>${RED}Error fanart in artist.nfo${NC}"
                             counterrorname=$(expr ${counterrorname} + 1 )
                         fi
                     fi
                 elif [[ "${albumname}" == "artist.nfo" ]]; then
                     if ! grep -q '<title>'"${artistname}"'</title>' "${album}"; then
-                        echo -e "=====>${RED}Error title in artist.nfo${NC}"
+                        cc_error "=====>${RED}Error title in artist.nfo${NC}"
                         counterrorname=$(expr ${counterrorname} + 1 )
                     fi
                 fi
             done <<< "${diralbum}"
             if [[ ${nbfolder} -eq 0 ]]; then
-               echo -e "=====>${RED}Error no Folder${NC}"
+               cc_error "=====>${RED}Error no Folder${NC}"
                counterrorfolder=$(expr ${counterrorfolder} + 1 )
             fi
             if [[ ${nblogo} -eq 0 ]]; then
@@ -211,7 +282,7 @@ if (( ${CC_DEBUG} )) ; then echo "DEBUG: '${artist}/artist.nfo'" ; fi
                 dirmusic=$(find "${album}" -maxdepth 1 -mindepth 1 -type f )
                 while IFS= read -r  music; do
                     simplemusic=$(basename "${music}")
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: file=${music}=" ; fi
+		    cc_debugf "DEBUG: file=${music}="
                     if [[ "${simplemusic}" == "cover.jpg" ]]; then
                         nbcover=$(expr ${nbcover} + 1 )
                         continue
@@ -244,14 +315,14 @@ if (( ${CC_DEBUG} )) ; then echo "DEBUG: file=${music}=" ; fi
                     fi
                     checkartist 
                 done <<< "${dirmusic}"
-if (( ${CC_DEBUG} )) ; then echo "DEBUG: synthese album=${album}=" ; fi
+                cc_debugf "DEBUG: synthese album=${album}="
                 if [[ ${nbmp3} -eq 0 ]]; then
-                    echo -e "=========>${RED}Error no MP3${NC}"
+                    cc_error "=========>${RED}Error no MP3${NC}"
                     counterrormp3=$(expr ${counterrormp3} + 1 )
                     localerror=1
                 fi
                 if [[ ${nbcover} -eq 0 ]]; then
-                    echo -e "=========>${RED}Error no cover${NC}"
+                    cc_error "=========>${RED}Error no cover${NC}"
                     counterrorcover=$(expr ${counterrorcover} + 1 )
                     localerror=1
                 fi
@@ -271,8 +342,8 @@ if (( ${CC_DEBUG} )) ; then echo "DEBUG: synthese album=${album}=" ; fi
             # if no image => nothing
             if [[ ! -f "${TODIR}/${artistname}/folder.jpg" ]]   && [[ ! -f "${TODIR}/${artistname}/folder.png" ]]   && [[ ! -f "${TODIR}/${artistname}/folder.webp" ]]   && \
                [[ ! -f "${TODIR}/${artistname}/backdrop.jpg" ]] && [[ ! -f "${TODIR}/${artistname}/backdrop.png" ]] && [[ ! -f "${TODIR}/${artistname}/backdrop.webp" ]]; then
+                cc_error "=====>${RED}Error no folder file${NC}"
                 counterrorfolder=$(expr ${counterrorfolder} + 1 )
-                echo -e "=====>${RED}Error no Folder${NC}"
             # if no artist.nfo => create a nfo file
             elif [[ ! -f "${TODIR}/${artistname}/artist.nfo" ]]; then
                 echo "=====>Creating NFO file"
