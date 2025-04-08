@@ -103,8 +103,8 @@ cc_artist=""
 FROMDIR="$( cd "$( dirname -- "${BASH_SOURCE[0]}" )" && pwd)@"
 FROMDIR="${FROMDIR%@}"
 
-# do not coppy these directories
-exception='./Podcasts'
+# do not copy these directories
+exception=""
 
 # analyze parameters with getops
 OPTIND=1
