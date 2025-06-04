@@ -11,6 +11,13 @@ You have your classified and ordered music in your reference folder, and you wan
 
 Here, a simple bash script[^1] to check or copy your music referential.
 
+## Mandatory
+
+Necessary tools:  
+
+- id3v2 (package id3v2),
+- metaflac (package flac).
+
 ## Step 1: Initial referential repository
 
 _Organize your music referential:_
