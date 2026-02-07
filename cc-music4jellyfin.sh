@@ -24,6 +24,7 @@ counterrorlogo=0
 counterrorbackground=0
 counterartist=0
 counteralbum=0
+countertrack=0
 counterrorartist=0
 counterrorname=0
 
@@ -282,7 +283,7 @@ while IFS= read -r d; do
                 dirmusic=$(find "${album}" -maxdepth 1 -mindepth 1 -type f )
                 while IFS= read -r  music; do
                     simplemusic=$(basename "${music}")
-		    cc_debugf "DEBUG: file=${music}="
+		            cc_debugf "DEBUG: file=${music}="
                     if [[ "${simplemusic}" == "cover.jpg" ]]; then
                         nbcover=$(expr ${nbcover} + 1 )
                         continue
@@ -290,10 +291,12 @@ while IFS= read -r d; do
                     if [[ "${simplemusic##*.}" == "mp3" ]]; then
                         nbmp3=$(expr ${nbmp3} + 1 )
                         # get list of artist in mp3 tag
+                        countertrack=$(expr ${countertrack} + 1 )
                         listartist=$(id3v2 -R "${music}" | grep TPE1: || true)
                         # suppress label
                         listartist="${listartist#*: }"
                 	elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        countertrack=$(expr ${countertrack} + 1 )
                         nbmp3=$(expr ${nbmp3} + 1 )
                         listartist=$(metaflac --list --block-number=1 "${music}" | grep ' ARTIST=' || true)
                         # suppress label
@@ -422,7 +425,8 @@ fi
 if [[ ${localerror} -eq 0 ]]; then
    echo -e "TOTAL ${GREEN}OK${NC}"
 fi
-echo -e "TOTAL Artists: ${counterartist} - Albums : ${counteralbum}"
+echo -e "TOTAL Artists: ${counterartist} - Albums : ${counteralbum} - Tracks : ${countertrack}"
+
 
 
 
