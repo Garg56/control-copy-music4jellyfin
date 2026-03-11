@@ -124,6 +124,12 @@ If you want to copy only some letters (A and C):
 cc-music4jellyfin.sh -i /home/myname/Music -w "./A ./C" ./
 ```
 
+If you want to copy only one artist (Petitbon Patricia), select the rigt directory (P):
+
+```bash
+cc-music4jellyfin.sh -i /home/myname/Music -w "./P" -a "Petitbon Patricia" ./
+```
+
 ### Step 4: Final Jellyfin media library
 
 Jellyfin will create album.nfo in each album directory, and update/create the file artist.nfo in the artist directory (if you chose medadata recorded in NFO files in the Jellyfin configuration).
