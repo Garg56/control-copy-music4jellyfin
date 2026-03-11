@@ -124,7 +124,7 @@ If you want to copy only some letters (A and C):
 cc-music4jellyfin.sh -i /home/myname/Music -w "./A ./C" ./
 ```
 
-If you want to copy only one artist (Petitbon Patricia), select the right directory (P):
+If you want to copy only one artist (Petibon Patricia), select the right directory (P):
 
 ```bash
 cc-music4jellyfin.sh -i /home/myname/Music -w "./P" -a "Petitbon Patricia" ./
