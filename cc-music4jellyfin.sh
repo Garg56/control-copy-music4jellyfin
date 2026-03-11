@@ -159,6 +159,7 @@ TODIR=""
 if [[ "${runmode}" == "normal" ]]; then
     if [[ ${juknbarg} -ge 1 ]] && [[ "${1}" != "" ]]; then
         TODIR="$1"
+	    TODIR=${TODIR/%\//}
     else
         TODIR="$(pwd)"
     fi
@@ -197,6 +198,10 @@ else
 fi
 
 # loop in the directory Music
+if [ ! -d "${FROMDIR}" ]; then
+  echo -e "\n=>${RED}Directory '${FROMDIR}' does not exist.${NC}"
+  exit 1
+fi
 cd "${FROMDIR}"
 dirletter=$(find . -maxdepth 1 -mindepth 1 -type d )
 while IFS= read -r d; do
@@ -217,6 +222,11 @@ while IFS= read -r d; do
     	dirartist=$(find "${d}" -maxdepth 1 -mindepth 1 -type d \( -name "${cc_artist}" \) )
     else
     	dirartist=$(find "${d}" -maxdepth 1 -mindepth 1 -type d )
+    fi
+    if [[ "${dirartist// }" == "" ]] && [[ "${cc_artist}" != "" ]]; then
+            cc_error "=====>${RED}Error artist='${cc_artist}' not found.${NC}"
+            dirartist="${dirartist// }" /* necessary ? */
+            break 1
     fi
     while IFS= read -r artist; do
         artistname=$(basename "${artist}")
@@ -341,6 +351,11 @@ while IFS= read -r d; do
             if [[ "${diralbum}" != "" ]]; then
                 count=$(echo "${diralbum}" | wc -l )
                 counteralbum=$(expr ${counteralbum} + ${count} )
+            fi
+            dirtrack=$(find "${artist}" -maxdepth 2 \( -name "*.mp3" -o -name "*.flac" \) )
+            if [[ "${diralbum}" != "" ]]; then
+                count=$(echo "${dirtrack}" | wc -l )
+                countertrack=$(expr ${countertrack} + ${count} )
             fi
             # if no image => nothing
             if [[ ! -f "${TODIR}/${artistname}/folder.jpg" ]]   && [[ ! -f "${TODIR}/${artistname}/folder.png" ]]   && [[ ! -f "${TODIR}/${artistname}/folder.webp" ]]   && \

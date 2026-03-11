@@ -105,7 +105,7 @@ The summary result:
     TOTAL No error artist name.: 16
     TOTAL No error on artist...: 16
     TOTAL OK
-    TOTAL Artists: 16 - Albums : 75
+    TOTAL Artists: 16 - Albums : 75 - Tracks : 222
 ```
 
 ### Step 3: Copy referential repository
