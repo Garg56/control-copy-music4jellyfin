@@ -123,7 +123,7 @@ export checktaglist
 
 ### Step 3: Copy referential repository
 
-The script copy all the files in the current directory but suppress the first level directory (the alphabetic one).
+The script copy all the files in the current directory but suppress the first level directory (the alphabetic one). The script copy or create a file `artist.nfo` and update the link to the pictures in accordance with the destination directory.
 
 To copy all files:
 
