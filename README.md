@@ -68,9 +68,9 @@ _Organize your music referential:_
 
 Check if each directory (artist) contains at less a file 'folder'.
 
+Check if each sub-directory (album) contains at less a file 'cover.jpg' and one track (mp3 or flac).
+
 Check if each name in the list present in the tags ARTIST (TPE1 for mp3), or ALBUMARTIST (TPE2 for mp3), or COMPOSER (TCOM for mp3) corresponds to an existing directory. The separator character of the lists can be '&' or ';'. The artist name 'Anonymous' is not tested.
-
-
 
 ```bash
 cc-music4jellyfin.sh -i /home/myname/Music -v
