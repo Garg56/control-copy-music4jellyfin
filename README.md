@@ -66,6 +66,12 @@ _Organize your music referential:_
 
 ### Step 2: Check referential repository
 
+Check if each directory (artist) contains at less a file 'folder'.
+
+Check if each name in the list present in the tags ARTIST (TPE1 for mp3), or ALBUMARTIST (TPE2 for mp3), or COMPOSER (TCOM for mp3) corresponds to an existing directory. The separator character of the lists can be '&' or ';'. The artist name 'Anonymous' is not tested.
+
+
+
 ```bash
 cc-music4jellyfin.sh -i /home/myname/Music -v
 ```
@@ -106,6 +112,13 @@ The summary result:
     TOTAL No error on artist...: 16
     TOTAL OK
     TOTAL Artists: 16 - Albums : 75 - Tracks : 222
+```
+
+By default, the checked tags are ARTIST, ALBUMARTIST and COMPOSER. To select the tags to be checked set and export the array checktaglist. Example:
+
+```bash
+checktaglist=("ARTIST" "ALBUMARTIST")
+export checktaglist
 ```
 
 ### Step 3: Copy referential repository
@@ -169,7 +182,7 @@ cc-music4jellyfin.sh [-a _pattern_] [-b _list_] [-c] [-d] [-e] [-h] [-i _dir_] [
        -a pattern : pattern of artists to check or copy in line with white list  
        -b list ...: directory list to not check or copy (black list) (incompatible with -w)  
        -c ........: copy only (default)  
-       -d ........: debug display  
+       -d ........: debug display (more verbose)
        -e ........: exit on first error when checking  
        -h ........: this help
        -i dir ....: input directory (default is script directory)  

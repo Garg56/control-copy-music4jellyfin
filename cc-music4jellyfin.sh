@@ -27,6 +27,13 @@ counteralbum=0
 countertrack=0
 counterrorartist=0
 counterrorname=0
+if [[ "${checktaglist[*]}" == "" ]]; then
+    checktaglist=("ARTIST" "ALBUMARTIST" "COMPOSER")
+fi
+completetaglist=("ARTIST" "ALBUMARTIST" "COMPOSER")
+ARTIST=("TPE1" "ARTIST" "artist")
+ALBUMARTIST=("TPE2"  "ALBUMARTIST"  "albumartist")
+COMPOSER=("TCOM" "COMPOSER"  "composer")
 
 function jukusage () {
     printf "\nusage: %s %s\n" $(basename "$0") "[-a pattern] [-b list] [-c] [-d] [-e] [-h] [-i dir] [-v] [-w list] [destination]"
@@ -44,30 +51,33 @@ function jukusage () {
 }
 
 function checkartist() {
-	cc_debugf "DEBUG: listartist=${listartist}="
-        if [[ "${listartist}" == *'&'* ]]; then
-               	cc_error "=========>${RED}Error artist *&* : '${listartist}'${NC}"
-               	counterrorartist=$(expr ${counterrorartist} + 1 )
-        fi
-        # loop on artist
-        IFS='/' read -ra NARTIST <<< "${listartist}"
-        for i in "${NARTIST[@]}"; do
-		# suppress extra blank
-		i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-		cc_debugf "DEBUG: currentartist=${artistname}=${i}="
+    cc_debugf "DEBUG: listartist=${listartist}="
+    labelname=${1:-"${ARTIST[2]}"}
+    cc_debugf "DEBUG: labelname=${labelname}="
+    if [[ "${listartist}" == *'&'* ]]; then
+        cc_error "=========>${RED}Error ${labelname} *&* : '${listartist}'${NC}"
+        counterrorartist=$(expr ${counterrorartist} + 1 )
+    fi
+    listartist=${listartist/Anonymous/}
+    # loop on artist
+    IFS='/;' read -ra NARTIST <<< "${listartist}"
+    for i in "${NARTIST[@]}"; do
+        # suppress extra blank
+        i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+        cc_debugf "DEBUG: currentartist=${artistname}=${i}="
 		# find "$i" in second level
-		if [[ "${i// }" == "" ]]; then
-			cc_error "=========>${RED}Error artist void: '${i}'${NC}"
-                        counterrorartist=$(expr ${counterrorartist} + 1 )
+        if [[ "${i// }" == "" ]]; then
+            cc_error "=========>${RED}Error ${labelname} void: '${i}'${NC}"
+            counterrorartist=$(expr ${counterrorartist} + 1 )
 		elif [[ "${artistname}" != "${i}" ]]; then
-			dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
-                        # check if directory exist
-			cc_debugf "DEBUG: otherartist=${dir}=${i}="
-                        if [[ "${dir##*/}" != "${i}" ]]; then
-                            cc_error "=========>${RED}Error no artist: '${i}'${NC}"
-			    counterrorartist=$(expr ${counterrorartist} + 1 )
-			fi
-		fi
+            dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
+            # check if directory exist
+            cc_debugf "DEBUG: otherartist=${dir}=${i}="
+            if [[ "${dir##*/}" != "${i}" ]]; then
+                cc_error "=========>${RED}Error no ${labelname} found: '${i}'${NC}"
+                counterrorartist=$(expr ${counterrorartist} + 1 )
+            fi
+        fi
 	done
 }
 
@@ -225,7 +235,7 @@ while IFS= read -r d; do
     fi
     if [[ "${dirartist// }" == "" ]] && [[ "${cc_artist}" != "" ]]; then
             cc_error "=====>${RED}Error artist='${cc_artist}' not found.${NC}"
-            dirartist="${dirartist// }" /* necessary ? */
+            dirartist="${dirartist// }"
             break 1
     fi
     while IFS= read -r artist; do
@@ -298,35 +308,54 @@ while IFS= read -r d; do
                         nbcover=$(expr ${nbcover} + 1 )
                         continue
                     fi
-                    if [[ "${simplemusic##*.}" == "mp3" ]]; then
-                        nbmp3=$(expr ${nbmp3} + 1 )
-                        # get list of artist in mp3 tag
-                        countertrack=$(expr ${countertrack} + 1 )
-                        listartist=$(id3v2 -R "${music}" | grep TPE1: || true)
-                        # suppress label
-                        listartist="${listartist#*: }"
-                	elif [[ "${simplemusic##*.}" == "flac" ]]; then
-                        countertrack=$(expr ${countertrack} + 1 )
-                        nbmp3=$(expr ${nbmp3} + 1 )
-                        listartist=$(metaflac --list --block-number=1 "${music}" | grep ' ARTIST=' || true)
-                        # suppress label
-                        listartist="${listartist#*=}"
-                    else
-                        continue
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${ARTIST[1]}[[:space:]] ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            # get list of artist in mp3 tag
+                            countertrack=$(expr ${countertrack} + 1 )
+                            listartist=$(id3v2 -R "${music}" | grep ${ARTIST[0]} || true)
+                            # suppress label
+                            listartist="${listartist#*: }"
+                            checkartist "${ARTIST[2]}"
+                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                            countertrack=$(expr ${countertrack} + 1 )
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${ARTIST[1]}'=' || true)
+                            # suppress label
+                            listartist="${listartist#*=}"
+                            checkartist "${ARTIST[2]}"
+                        fi
                     fi
-                    checkartist 
-                    if [[ "${simplemusic##*.}" == "mp3" ]]; then
-                        # get list of artist in mp3 tag
-                        listartist=$(id3v2 -R "${music}" | grep TPE2: || true)
-                        # suppress label
-                        listartist="${listartist#*: }"
-                	elif [[ "${simplemusic##*.}" == "flac" ]]; then
-                        nbmp3=$(expr ${nbmp3} + 1 )
-                        listartist=$(metaflac --list --block-number=1 "${music}" | grep ' ALBUMARTIST=' || true)
-                        # suppress label
-                        listartist="${listartist#*=}"
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${ALBUMARTIST[1]}[[:space:]] ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                            # get list of artist in mp3 tag
+                            listartist=$(id3v2 -R "${music}" | grep ${ALBUMARTIST[0]} || true)
+                            # suppress label
+                            listartist="${listartist#*: }"
+                            checkartist "${ALBUMARTIST[2]}"
+                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${ALBUMARTIST[1]}'=' || true)
+                            # suppress label
+                            listartist="${listartist#*=}"
+                            checkartist "${ALBUMARTIST[2]}"
+                        fi
                     fi
-                    checkartist 
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${COMPOSER[1]}[[:space:]] ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                            # get list of artist in mp3 tag
+                            listartist=$(id3v2 -R "${music}" | grep ${COMPOSER[0]} || true)
+                            # suppress label
+                            listartist="${listartist#*: }"
+                            checkartist "${COMPOSER[2]}"
+                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${COMPOSER[1]}'=' || true)
+                            # suppress label
+                            listartist="${listartist#*=}"
+                            checkartist "${COMPOSER[2]}"
+                        fi
+                    fi
                 done <<< "${dirmusic}"
                 cc_debugf "DEBUG: synthese album=${album}="
                 if [[ ${nbmp3} -eq 0 ]]; then
