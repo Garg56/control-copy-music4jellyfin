@@ -114,7 +114,7 @@ The summary result:
     TOTAL Artists: 16 - Albums : 75 - Tracks : 222
 ```
 
-By default, the checked tags are ARTIST, ALBUMARTIST and COMPOSER. To select the tags to be checked set and export the array checktaglist. Example:
+By default, the checked tags are ARTIST, ALBUMARTIST, COMPOSER and DISCNUMBER. To select the tags to be checked set and export the array checktaglist. Example:
 
 ```bash
 checktaglist=("ARTIST" "ALBUMARTIST")

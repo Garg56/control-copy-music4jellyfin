@@ -28,12 +28,13 @@ countertrack=0
 counterrorartist=0
 counterrorname=0
 if [[ "${checktaglist[*]}" == "" ]]; then
-    checktaglist=("ARTIST" "ALBUMARTIST" "COMPOSER")
+    checktaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER")
 fi
-completetaglist=("ARTIST" "ALBUMARTIST" "COMPOSER")
+completetaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER")
 ARTIST=("TPE1" "ARTIST" "artist")
 ALBUMARTIST=("TPE2"  "ALBUMARTIST"  "albumartist")
 COMPOSER=("TCOM" "COMPOSER"  "composer")
+DISCNUMBER=("TPOS" "DISCNUMBER" "discnumber")
 
 function jukusage () {
     printf "\nusage: %s %s\n" $(basename "$0") "[-a pattern] [-b list] [-c] [-d] [-e] [-h] [-i dir] [-v] [-w list] [destination]"
@@ -51,9 +52,9 @@ function jukusage () {
 }
 
 function checkartist() {
-    cc_debugf "DEBUG: listartist=${listartist}="
     labelname=${1:-"${ARTIST[2]}"}
     cc_debugf "DEBUG: labelname=${labelname}="
+    cc_debugf "DEBUG: listartist=${listartist}="
     if [[ "${listartist}" == *'&'* ]]; then
         cc_error "=========>${RED}Error ${labelname} *&* : '${listartist}'${NC}"
         counterrorartist=$(expr ${counterrorartist} + 1 )
@@ -79,6 +80,22 @@ function checkartist() {
             fi
         fi
 	done
+}
+
+function checkdiscnumber() {
+    labelname=${1:-"${DISCNUMBER[2]}"}
+    cc_debugf "DEBUG: labelname=${labelname}="
+    cc_debugf "DEBUG: discnumbercourant=${discnumbercourant}="
+    cc_debugf "DEBUG: firstdiscnumberflag=${firstdiscnumberflag}="
+    cc_debugf "DEBUG: firstdiscnumbervalue=${firstdiscnumbervalue}="
+    if [[ ${firstdiscnumberflag} -eq 0 ]]; then
+        firstdiscnumberflag=1
+        firstdiscnumbervalue="${discnumbercourant}"
+        cc_debugf "DEBUG: firstdiscnumbervalue=${firstdiscnumbervalue}="
+    elif [[ "${discnumbercourant}" != "${firstdiscnumbervalue}" ]]; then
+        cc_error "=========>${RED}Error ${labelname} different : '${firstdiscnumbervalue}' and '${discnumbercourant}'${NC}"
+        counterrorartist=$(expr ${counterrorartist} + 1 )
+    fi
 }
 
 function cc_error() {
@@ -289,6 +306,7 @@ while IFS= read -r d; do
             fi
             nbcover=0
             nbmp3=0
+
             diralbum=$(find "${artist}" -maxdepth 1 -mindepth 1 -type d )
             while IFS= read -r  album; do
                 albumname=$(basename "${album}")
@@ -299,6 +317,8 @@ while IFS= read -r d; do
                     counterroralbum=$(expr ${counterroralbum} + 1 )
                     break 1
                 fi
+                firstdiscnumberflag=0
+                firstdiscnumbervalue="0"
                 counteralbum=$(expr ${counteralbum} + 1 )
                 dirmusic=$(find "${album}" -maxdepth 1 -mindepth 1 -type f )
                 while IFS= read -r  music; do
@@ -354,6 +374,39 @@ while IFS= read -r d; do
                             # suppress label
                             listartist="${listartist#*=}"
                             checkartist "${COMPOSER[2]}"
+                        fi
+                    fi
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${ARTIST[1]}[[:space:]] ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            # get list of artist in mp3 tag
+                            countertrack=$(expr ${countertrack} + 1 )
+                            listartist=$(id3v2 -R "${music}" | grep ${ARTIST[0]} || true)
+                            # suppress label
+                            listartist="${listartist#*: }"
+                            checkartist "${ARTIST[2]}"
+                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                            countertrack=$(expr ${countertrack} + 1 )
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${ARTIST[1]}'=' || true)
+                            # suppress label
+                            listartist="${listartist#*=}"
+                            checkartist "${ARTIST[2]}"
+                        fi
+                    fi
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${DISCNUMBER[1]}[[:space:]] ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]]; then
+                            # get list of artist in mp3 tag
+                            discnumbercourant=$(id3v2 -R "${music}" | grep ${DISCNUMBER[0]} || true)
+                            # suppress label
+                            discnumbercourant="${discnumbercourant#*: }"
+                            checkdiscnumber "${DISCNUMBER[2]}"
+                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                            nbmp3=$(expr ${nbmp3} + 1 )
+                            discnumbercourant=$(metaflac --list --block-number=1,2 "${music}" | grep ' '"${DISCNUMBER[1]}"'=' || true)
+                            # suppress label
+                            discnumbercourant="${discnumbercourant#*=}"
+                            checkdiscnumber "${DISCNUMBER[2]}"
                         fi
                     fi
                 done <<< "${dirmusic}"
