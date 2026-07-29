@@ -82,6 +82,31 @@ function checkartist() {
 	done
 }
 
+function checkcomposer() {
+    labelname=${1:-"${COMPOSER[2]}"}
+    cc_debugf "DEBUG: labelname=${labelname}="
+    cc_debugf "DEBUG: listartist=${listartist}="
+    if [[ "${listartist}" == *'&'* ]]; then
+        cc_error "=========>${RED}Error ${labelname} *&* : '${listartist}'${NC}"
+        counterrorartist=$(expr ${counterrorartist} + 1 )
+    fi
+    # get composer name
+    i="${listartist}"
+    # suppress extra blank
+    i=$(echo -e "${i}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    cc_debugf "DEBUG: currentartist=${artistname}=${i}="
+    # find "$i" in second level
+    if [[ "${i// }" != "" ]] && [[ "${artistname}" != "${i}" ]]; then
+        dir=$(find ./* -maxdepth 1 -mindepth 1 -type d -name "${i}")
+        # check if directory exist
+        cc_debugf "DEBUG: otherartist=${dir}=${i}="
+        if [[ "${dir##*/}" != "${i}" ]]; then
+            cc_error "=========>${RED}Error no ${labelname} found: '${i}'${NC}"
+            counterrorartist=$(expr ${counterrorartist} + 1 )
+        fi
+	fi
+}
+
 function checkdiscnumber() {
     labelname=${1:-"${DISCNUMBER[2]}"}
     cc_debugf "DEBUG: labelname=${labelname}="
@@ -367,13 +392,13 @@ while IFS= read -r d; do
                             listartist=$(id3v2 -R "${music}" | grep ${COMPOSER[0]} || true)
                             # suppress label
                             listartist="${listartist#*: }"
-                            checkartist "${COMPOSER[2]}"
+                            checkcomposer "${COMPOSER[2]}"
                         elif [[ "${simplemusic##*.}" == "flac" ]]; then
                             nbmp3=$(expr ${nbmp3} + 1 )
                             listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${COMPOSER[1]}'=' || true)
                             # suppress label
                             listartist="${listartist#*=}"
-                            checkartist "${COMPOSER[2]}"
+                            checkcomposer "${COMPOSER[2]}"
                         fi
                     fi
                     if [[ " ${checktaglist[*]} " =~ [[:space:]]${ARTIST[1]}[[:space:]] ]]; then
