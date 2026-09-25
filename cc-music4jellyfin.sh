@@ -22,19 +22,24 @@ counterroralbum=0
 counterrorfolder=0
 counterrorlogo=0
 counterrorbackground=0
+counterrorduration=0
 counterartist=0
 counteralbum=0
 countertrack=0
 counterrorartist=0
 counterrorname=0
 if [[ "${checktaglist[*]}" == "" ]]; then
-    checktaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER")
+    checktaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER" "DURATION")
 fi
-completetaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER")
+completetaglist=("ARTIST" "ALBUMARTIST" "COMPOSER" "DISCNUMBER" "DURATION")
 ARTIST=("TPE1" "ARTIST" "artist")
 ALBUMARTIST=("TPE2"  "ALBUMARTIST"  "albumartist")
 COMPOSER=("TCOM" "COMPOSER"  "composer")
 DISCNUMBER=("TPOS" "DISCNUMBER" "discnumber")
+DURATION=("YES" "DURATION" "duration")
+TRACKMP3CONTROL="YES"
+TRACKFLACCONTROL="YES"
+DURATIONCONTROL="YES"
 
 function jukusage () {
     printf "\nusage: %s %s\n" $(basename "$0") "[-a pattern] [-b list] [-c] [-d] [-e] [-h] [-i dir] [-v] [-w list] [destination]"
@@ -123,6 +128,47 @@ function checkdiscnumber() {
     fi
 }
 
+function checkduration() {
+    labelname=${1:-"${DURATION[2]}"}
+    flagcheckduration=${NO:-"${DURATION[0]}"}
+    cc_debugf "DEBUG: labelname=${labelname}="
+    cc_debugf "DEBUG: flagcheckduration=${flagcheckduration}="
+    if [[ "${flagcheckduration}" != "YES" ]]; then
+        return 0
+    fi
+    currenttrack=${music}
+    durationmp3=$(exiftool "${currenttrack}" | grep Duration | grep -oP "[0-9]{1}:[0-9]{2}:[0-9]{2}" || true )
+    durationexact=$(ffmpeg -i "${currenttrack}" |& grep -oP "[0-9]{2}:[0-9]{2}:[0-9]{2}" || true )
+    cc_debugf "DEBUG: durationexact=${durationexact}="
+    cc_debugf "DEBUG: durationmp3=${durationmp3}="
+    durationexact=$(time2seconds "${durationexact}")
+    durationmp3=$(time2seconds "0${durationmp3}")
+    if [[ ${durationexact} -gt ${durationmp3} ]]; then
+        durationdifference=$(expr ${durationexact} - ${durationmp3})
+    elif [[ ${durationexact} -eq ${durationmp3} ]]; then
+        durationdifference=0
+    else
+        durationdifference=$(expr ${durationmp3} - ${durationexact})
+    fi
+    if [[ ${durationdifference} -lt 2 ]] || [[ ${durationmp3} -eq 0 ]]; then
+        cc_debugf "DEBUG: durationexact=${durationexact}="
+        cc_debugf "DEBUG: durationmp3=${durationmp3}="
+    else
+        cc_error "=========>${RED}Error ${labelname} different : '${durationexact}' and '${durationmp3}'${NC}"
+        counterrorduration=$(expr ${counterrorduration} + 1 )
+    fi
+}
+
+function time2seconds() {
+    local time="$1"
+    local hours minutes seconds
+    if [[ "${time}" == "" ]] || [[ "${time}" == "0" ]]; then
+        time="00:00:00"
+    fi
+    IFS=: read -r hours minutes seconds <<< "$time"
+    echo $((10#$hours * 3600 + 10#$minutes * 60 + 10#$seconds))
+}
+
 function cc_error() {
 	echo -e "${1}"
 	if [[ "${CC_EXIT}" == "exit" ]]; then
@@ -136,11 +182,23 @@ function cc_debugf() {
 }
 
 if ! command -v id3v2 -v 2>&1 >/dev/null; then
-	echo -e "${RED}ERROR: id3v2 could not be found !${NC}\n"
+	echo -e "${RED}ERROR: id3v2 could not be found! No mp3 track control.${NC}\n"
+    TRACKMP3CONTROL="NO"
 	exit 1
 fi
 if ! command -v metaflac -v 2>&1 >/dev/null; then
-	echo -e "${ORANGE}WARNING: metaflac could not be found !${NC}"
+	echo -e "${ORANGE}WARNING: metaflac could not be found! No flac track control.${NC}"
+    TRACKFLACCONTROL="NO"
+fi
+if ! command -v ffmpeg -version 2>&1 >/dev/null; then
+	echo -e "${ORANGE}WARNING: ffmpeg could not be found! No duration control.${NC}"
+    DURATIONCONTROL="NO"
+    DURATION[0]="NO"
+fi
+if ! command -v exiftool -ver 2>&1 >/dev/null; then
+	echo -e "${ORANGE}WARNING: exiftool could not be found! No duration control.${NC}"
+    DURATIONCONTROL="NO"
+    DURATION[0]="NO"
 fi
 
 # initialize variables
@@ -393,7 +451,7 @@ while IFS= read -r d; do
                             # suppress label
                             listartist="${listartist#*: }"
                             checkcomposer "${COMPOSER[2]}"
-                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        elif [[ "${simplemusic##*.}" == "flac" ]] && [[ ${TRACKFLACCONTROL} == "YES" ]]; then
                             nbmp3=$(expr ${nbmp3} + 1 )
                             listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${COMPOSER[1]}'=' || true)
                             # suppress label
@@ -410,7 +468,7 @@ while IFS= read -r d; do
                             # suppress label
                             listartist="${listartist#*: }"
                             checkartist "${ARTIST[2]}"
-                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        elif [[ "${simplemusic##*.}" == "flac" ]] && [[ ${TRACKFLACCONTROL} == "YES" ]]; then
                             countertrack=$(expr ${countertrack} + 1 )
                             nbmp3=$(expr ${nbmp3} + 1 )
                             listartist=$(metaflac --list --block-number=1,2 "${music}" | grep ' '${ARTIST[1]}'=' || true)
@@ -426,12 +484,17 @@ while IFS= read -r d; do
                             # suppress label
                             discnumbercourant="${discnumbercourant#*: }"
                             checkdiscnumber "${DISCNUMBER[2]}"
-                        elif [[ "${simplemusic##*.}" == "flac" ]]; then
+                        elif [[ "${simplemusic##*.}" == "flac" ]] && [[ "${TRACKFLACCONTROL}" == "YES" ]]; then
                             nbmp3=$(expr ${nbmp3} + 1 )
                             discnumbercourant=$(metaflac --list --block-number=1,2 "${music}" | grep ' '"${DISCNUMBER[1]}"'=' || true)
                             # suppress label
                             discnumbercourant="${discnumbercourant#*=}"
                             checkdiscnumber "${DISCNUMBER[2]}"
+                        fi
+                    fi
+                    if [[ " ${checktaglist[*]} " =~ [[:space:]]${DURATION[1]}[[:space:]] ]] && [[ "${DURATIONCONTROL}" == "YES" ]]; then
+                        if [[ "${simplemusic##*.}" == "mp3" ]] || [[ "${simplemusic##*.}" == "flac" ]]; then
+                            checkduration "${DURATION[2]}"
                         fi
                     fi
                 done <<< "${dirmusic}"
@@ -543,6 +606,12 @@ if [[ ${counterrorartist} -ne 0 ]]; then
    localerror=1
 else
    echo -e "TOTAL ${GREEN}No error on artist${NC}...: ${counterartist}"
+fi
+if [[ ${counterrorduration} -ne 0 ]]; then
+   echo -e "TOTAL ${RED}Error on duration${NC}....: ${counterrorduration}/${counterartist}"
+   localerror=1
+else
+   echo -e "TOTAL ${GREEN}No error on duration${NC}.: ${counterartist}"
 fi
 if [[ ${localerror} -eq 0 ]]; then
    echo -e "TOTAL ${GREEN}OK${NC}"

@@ -16,7 +16,9 @@ Here, a simple bash script[^1] to check or copy your music referential.
 Necessary tools:  
 
 - id3v2 (package id3v2),
-- metaflac (package flac).
+- metaflac (package flac),
+- exiftool (for DURATION control),
+- ffmpeg (for DURATION control).
 
 ## Step 1: Initial referential repository
 
@@ -112,11 +114,12 @@ The summary result:
     TOTAL No warning on folder.: 16
     TOTAL No error artist name.: 16
     TOTAL No error on artist...: 16
+    TOTAL No error on duration.: 16
     TOTAL OK
     TOTAL Artists: 16 - Albums : 75 - Tracks : 222
 ```
 
-By default, the checked tags are ARTIST, ALBUMARTIST, COMPOSER and DISCNUMBER. To select the tags to be checked set and export the array checktaglist. Example:
+By default, the checked tags are ARTIST, ALBUMARTIST, COMPOSER, DISCNUMBER and DURATION. To select the tags to be checked set and export the array checktaglist. Example:
 
 ```bash
 checktaglist=("ARTIST" "ALBUMARTIST")
